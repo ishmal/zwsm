@@ -1,0 +1,32 @@
+{
+  "name": "zwsm",
+  "version": "1.0.0",
+  "description": "Library for weak signal experimentation",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ishmal/zwsm.git"
+  },
+  "keywords": [
+    "ham",
+    "fec",
+    "psk"
+  ],
+  "author": "Bob Jamison",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ishmal/zwsm/issues"
+  },
+  "homepage": "https://github.com/ishmal/zwsm#readme",
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "jest": "^23.6.0",
+    "rollup": "^0.66.6"
+  }
+}
