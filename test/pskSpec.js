@@ -1,10 +1,10 @@
 import { ModeTester } from "./modeTester";
-import { Bpsk } from "../src/mode/bpsk";
+import { Qam16 } from "../src/mode/dqam16";
 
 
-describe("Bpsk", () => {
+describe.skip("Qam16", () => {
 	it("should pass a ModeTester run", () => {
-		const tester = new ModeTester(Bpsk);
+		const tester = new ModeTester(Qam16);
 		debugger;
 		tester.execute();
 	});

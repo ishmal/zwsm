@@ -27,60 +27,35 @@ export class Qam16 extends Mode{
 		let sampleRate = par.sampleRate;
 		this.samplesPerSymbol = (sampleRate / this.symbolRate) | 0;
 		console.log("sps:" + this.samplesPerSymbol);
-		this.xmSampleCount = 0;
-		this.xmText = raven;
-		this.xmTextPosition = 0;
-		this.xmCode = null;
-		this.xmCodePosition = 0;
-		this.xmKey = 0;
-		this.symbol = qam16[0][0];
 		this.quadrant = 0;
-		this.byte = 0;
-		this.nrQbit = 99;
 		par.setBandpass(this.frequency, this.symbolRate);
 	}
 
-	getNextByte() {
-		let code = this.xmText.charCodeAt(this.xmTextPosition++);
-		if (this.xmTextPosition >= this.xmText.length) {
-			this.xmTextPosition = 0;
-		}
-		return code & 0xff;
-	}
-
-	getNextQbit() {
-		if (this.nrQbit >= 2) {
-			this.byte = this.getNextByte();
-			this.nrQbit = 0;
-		}
-		let qbits = (this.nrQbit === 0) ?
-			(this.byte >> 4) & 15 : this.byte & 15;
-		this.nrQbit++;
-		return qbits;
-	}
-
-	getNextSymbol() {
-		let qbits = this.getNextQbit();
-		let hi = (qbits >> 2) & 3;
-		let lo = qbits & 3;
-		let newQuad = q16Trans[hi][this.quadrant];
-		let symbol = qam16[newQuad][lo];
-		this.quadrant = newQuad;
-		return symbol;
+	receive() {
+		
 	}
 
 	transmit() {
-		let a = this.nco.next();
-		let b = this.symbol;
-		this.xmSampleCount++;
-		if (this.xmSampleCount >= this.samplesPerSymbol) {
-			this.xmSampleCount = 0;
-			this.symbol = this.getNextSymbol();
+		const inBytes = this.getTransmitData(30);
+		if (!inBytes) {
+			return null; // should probably idle instead
 		}
-		let i = a.r * b.r - a.i * b.i;
-		let q = a.r * b.i + a.i * b.r;
-		let sample = i + q;
-		return sample;
+		let quadrant = this.quadrant;
+		const outBuf = [];
+		inBytes.forEach(b => {
+			const hi1 = (b >> 6) & 3;
+			const lo1 = (b >> 4) & 3;
+			quadrant = q16Trans[hi1][quadrant];
+			const symbol1 = qam16[quadrant][lo1];
+			outBuf.push(symbol1);
+			const hi2 = (b >> 2) & 3;
+			const lo2 = b & 3;
+			quadrant = q16Trans[hi2][quadrant];
+			const symbol2 = qam16[quadrant][lo2];
+			outBuf.push(symbol2);
+		});
+		this.quadrant = quadrant;
+		return outBuf;
 	}
 }
 

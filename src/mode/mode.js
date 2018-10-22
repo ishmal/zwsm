@@ -120,19 +120,16 @@ export class Mode {
 			//we need to turn something off here
 			return;
 		}
-		const outBuf = [];
+		const inputBuf = [];
 		for (let i = 0, len = data.length; i < len; i++) {
 			const v = data[i];
 			const cs = this.nco.next();
-			const chunk = this.receive({
+			inputBuf[i] = {
 				r: v * cs.r,
 				i: v * cs.i
-			});
-			if (chunk) {
-				outBuf += chunk;
-			}
+			};
 		}
-		return outBuf;
+		this.receive(inBuf);
 	}
 
 	receiveOutput(bytes) {
@@ -141,9 +138,9 @@ export class Mode {
 
 	/**
 	 * Overload this for each mode.
-	 * @param v {Complex}
+	 * @param {array<Complex>} buf array of Complex values
 	 */
-	receive(v) { }
+	receive(buf) { }
 
 	// #######################
 	// # T R A N S M I T
@@ -192,7 +189,7 @@ export class Mode {
 		if (!baseband) {
 			return null;
 		}
-		const xs = this.txNco.mixBuf(baseband);
+		const xs = this.txNco.mixComplexBuf(baseband);
 		return xs;
 	}
 

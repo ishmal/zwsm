@@ -37,116 +37,9 @@ function createCossinTable() {
 
 const ncoTable = createCossinTable();
 
-/**
- * Base class for Numerically-controlled oscillators
- */
-export class Nco {
-
-    /**
-     * @param v {number}
-     */
-    setFrequency(v) {}
-
-    /**
-     * @param v {number}
-     */
-    setError(v) {}
-
-    /**
-     * @return {Complex}
-     */
-    next() {
-      return {
-        r: 0,
-        i: 0
-      };
-    }
-
-    /**
-     * @param v {number}
-     */
-    mixNext(v) {
-      return {
-        r: 0,
-        i: 0
-      };
-    }
-
-    /**
-     * @param inb {number[]}
-     * @return {number[]}
-     */
-    mixBuf(inb) {
-      return [];
-    }
-}
 
 const TWO32 = 4294967296.0;
 
-/**
- * A sine generator with a 31-bit accumulator and a 16-bit
- * lookup table.  Much faster than Math.whatever
- * @param frequency {number}
- * @param sampleRate {number}
- * @return {Nco}
- */
-function NcoCreate(frequency, sampleRate) {
-
-    const hzToInt = TWO32 / sampleRate;
-    const freq = 0 | 0;
-    const phase = 0 | 0;
-    const table = ncoTable;
-    const err = 0;
-    const maxErr = (50 * hzToInt) | 0;  // in hertz
-    console.log("NCO maxErr: " + maxErr);
-    const minErr = -(50 * hzToInt) | 0;  // in hertz
-
-    const newNco = new Nco();
-    newNco.setFrequency = function(v) {
-        freq = (v * hzToInt) | 0;
-    };
-
-    setFrequency(frequency);
-
-    newNco.setError = function(v) {
-        err = (err * 0.9 + v * 100000.0) | 0;
-        // console.log("err:" + err + "  v:" + v);
-        if (err > maxErr) {
-            err = maxErr;
-        } else if (err < minErr) {
-            err = minErr;
-        }
-    };
-
-    newNco.next = function() {
-        phase += freq + err;
-        return table[phase >>> 16];
-    };
-
-    /**
-     * @param v mumber
-     * @return Complex
-     */
-    newNco.mixNext = function(v) {
-        phase += freq + err;
-        const cs = table[phase >>> 16];
-        return { r: v * cs.r, i: -v * cs.i };
-    };
-
-    newNco.mixBuf = function(inb) {
-        const len = inb.length;
-        const xs = new Array(len);
-        for (let i=0 ; i < len ; i++) {
-          const v = inb[i];
-          phase += freq + err;
-          const cs = table[phase >>> 16];
-          xs[i] = v * cs.r - v * cs.i;
-        }
-        return xs;
-    };
-
-    return newNco;
-}
 
 /**
  * A simpler Nco for transmitting, etc
@@ -154,46 +47,50 @@ function NcoCreate(frequency, sampleRate) {
  * @param sampleRate {number}
  * @return {Nco}
  */
-function NcoCreateSimple(frequency, sampleRate) {
+export class Nco {
+	constructor(frequency, sampleRate) {
+		this.hzToInt = TWO32 / sampleRate;
+		this.freq = 0 | 0;
+		this.phase = 0 | 0;
+		this.setFrequency(frequency);
+	}
 
-    const hzToInt = TWO32 / sampleRate;
-    let freq = 0 | 0;
-    let phase = 0 | 0;
-    const table = ncoTable;
+    setFrequency(v) {
+        this.freq = (v * this.hzToInt) | 0;
+    }
 
-    const nco = new Nco();
-    nco.setFrequency = function(v) {
-        freq = (v * hzToInt) | 0;
-    };
-    nco.setFrequency(frequency);
+    next() {
+        this.phase += this.freq;
+        return ncoTable[this.phase >>> 16];
+    }
 
-    nco.next = function() {
-        phase += freq;
-        return table[phase >>> 16];
-    };
-
-    nco.mixNext = function(v) {
-        phase += freq;
-        const cs = table[phase >>> 16];
+    mixReal(v) {
+        this.phase += this.freq;
+        const cs = ncoTable[this.phase >>> 16];
         return { r: v * cs.r, i: -v * cs.i };
-    };
+    }
 
-    nco.mixBuf = function(inb) {
-        const len = inb.length;
-        const xs = new Array(len);
-        for (let i=0 ; i < len ; i++) {
+    mixRealBuf(inb) {
+        const xs = [];
+        for (let i=0, len = inb.length ; i < len ; i++) {
           const v = inb[i];
-          phase += freq;
-          const cs = table[phase >>> 16];
+          this.phase += this.freq;
+          const cs = ncoTable[this.phase >>> 16];
           xs[i] = v * cs.r - v * cs.i;
         }
         return xs;
     };
 
-    return nco;
+    mixComplexBuf(inb) {
+        const xs = [];
+        for (let i=0, len = inb.length ; i < len ; i++) {
+          const v = inb[i];
+          this.phase += this.freq;
+          const cs = ncoTable[this.phase >>> 16];
+          xs[i] = v * cs.r - v * cs.i;
+        }
+        return xs;
+    };
+
 }
 
-export const Nco = {
-	create: NcoCreate,
-	createSimple: NcoCreateSimple
-};
