@@ -1,3 +1,4 @@
+import { Utf8 } from "../src/utf8";
 
 const RAVEN = `
 Once upon a midnight dreary, while I pondered, weak and weary,
@@ -16,14 +17,20 @@ export class ModeTester {
 
 	execute() {
 		const mode = this.mode;
-		mode.sendText(RAVEN);
+		let outBuf = [];
+		const exp = RAVEN;
+		mode.receiveOutput = (bytes) => {
+			outBuf = outBuf.concat(bytes);
+		};
+		mode.sendText(exp);
 		while(true) {
-			const data = mode.transmit();
-			const outBytes = mode.receive(data); //receiver needs to see the final null
-			outBuf = outBuf.concat(outBytes);
+			const data = mode.transmitSignal();
+			mode.receiveSignal(data); //receiver needs to see the final null
 			if (!data) {
 				break;
 			}
 		}
+		const result = Utf8.toString(outBuf);
+		expect(result).toEqual(exp);
 	}
 }

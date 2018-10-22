@@ -90,7 +90,7 @@ const TWO32 = 4294967296.0;
  * @param sampleRate {number}
  * @return {Nco}
  */
-export function NcoCreate(frequency, sampleRate) {
+function NcoCreate(frequency, sampleRate) {
 
     const hzToInt = TWO32 / sampleRate;
     const freq = 0 | 0;
@@ -154,7 +154,7 @@ export function NcoCreate(frequency, sampleRate) {
  * @param sampleRate {number}
  * @return {Nco}
  */
-export function NcoCreateSimple(frequency, sampleRate) {
+function NcoCreateSimple(frequency, sampleRate) {
 
     const hzToInt = TWO32 / sampleRate;
     let freq = 0 | 0;
@@ -192,3 +192,8 @@ export function NcoCreateSimple(frequency, sampleRate) {
 
     return nco;
 }
+
+export const Nco = {
+	create: NcoCreate,
+	createSimple: NcoCreateSimple
+};

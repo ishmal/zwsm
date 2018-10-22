@@ -21,17 +21,9 @@
 import { Complex } from "../complex";
 import { Constants } from "../constants";
 import { Biquad } from "../biquad";
-import { NcoCreateSimple } from "../nco";
+import { Nco } from "../nco";
 import { Utf8 } from "../utf8";
 
-
-export class Afc {
-	adjust() {}
-	/**
-	 * @param ps {number[]}
-	 */
-	compute(ps) {}
-}
 
 
 /**
@@ -44,14 +36,10 @@ export class Mode {
 	 */
 	constructor(par) {
 		this.par = par;
-		this.theFrequency = 1000;
-		this.setupAfc();
-		this.useAfc = false;
-		this._rate = 31.25;
-		this.nco = NcoCreateSimple(this.frequency, par.sampleRate);
-		this.txNco = NcoCreateSimple(this.frequency, par.sampleRate);
-		this.cwBuffer = new Array(1024);
-		this.cwBuffer.fill(1.0);
+		this.frequency = 1000;
+		this.rate = 31.25;
+		this.rxNco = Nco.createSimple(this.frequency, par.sampleRate);
+		this.txNco = Nco.createSimple(this.frequency, par.sampleRate);
 		this.transmitData = [];
 	}
 
@@ -71,59 +59,24 @@ export class Mode {
 	/**
 	 * @param freq {number}
 	 */
-	set frequency(freq) {
-		this.theFrequency = freq;
-		this.nco.setFrequency(freq);
+	setFrequency(freq) {
+		this.frequency = freq;
+		this.rxNco.setFrequency(freq);
 		this.txNco.setFrequency(freq);
-		this.afc.adjust();
 	}
 
 	/**
 	 * @return {number}
 	 */
-	get frequency() {
-		return this.theFrequency;
+	getFrequency() {
+		return this.frequency;
 	}
 
 	/**
 	 * @return {number}
 	 */
-	get bandwidth() {
+	getBandwidth() {
 		return 0;
-	}
-
-	setupAfc() {
-		let a = new Afc();
-		let afcFilter = Biquad.lowPass(1.0, 100.0);
-		let loBin, freqBin, hiBin;
-		a.adjust = () => {
-			let freq = this.frequency;
-			let fs = this.par.sampleRate;
-			let bw = this.bandwidth;
-			let binWidth = fs * 0.5 / Constants.BINS;
-			freqBin = Math.round(freq / binWidth);
-			loBin = freqBin - 15;
-			hiBin = freqBin + 15;
-		};
-		a.compute = (ps) => {
-			let sum = 0;
-			let sumScale = 0;
-			for (let i = loBin, j = freqBin + 1; i < freqBin; i++, j++) {
-				let psi = Math.abs(ps[i]);
-				let psj = Math.abs(ps[j]);
-				sum += psj - psi;
-				sumScale += psj + psi;
-			}
-			let normalized = sum / sumScale;
-			this.par.setFrequency(this.frequency - normalized);
-		};
-		this.afc = a;
-	}
-
-	status(msg) {
-		const text = this.getProperties().name + " : " + msg;
-		console.log(text);
-		// this.par.status(text);
 	}
 
 	/**
@@ -134,24 +87,16 @@ export class Mode {
 	 * @param v {number}
 	 */
 	setRate(v) {
-		this._rate = v;
-		this.afc.adjust();
+		this.rate = v;
 		this.status("Fs: " + this.par.sampleRate + " rate: " + v +
 			" sps: " + this.samplesPerSymbol);
 	}
 
 	/**
-	 * @param v {number}
-	 */
-	set rate(v) {
-		this.setRate(v);
-	}
-
-	/**
 	 * @return {number}
 	 */
-	get rate() {
-		return this._rate;
+	getRate() {
+		return this.rate;
 	}
 
 
@@ -170,32 +115,35 @@ export class Mode {
 	/**
 	 * @param ps {number[]}
 	 */
-	receiveFft(ps) {
-		if (this.useAfc) {
-			this.afc.compute(ps);
+	receiveSignal(data) {
+		if (!data) {
+			//we need to turn something off here
+			return;
 		}
-	}
-
-	/**
-	 * @param ps {number[]}
-	 */
-	receiveData(data) {
-		let len = data.length;
-		for (let i = 0; i < len; i++) {
-			let v = data[i];
-			let cs = this.nco.next();
-			this.receive({
+		const outBuf = [];
+		for (let i = 0, len = data.length; i < len; i++) {
+			const v = data[i];
+			const cs = this.nco.next();
+			const chunk = this.receive({
 				r: v * cs.r,
 				i: v * cs.i
 			});
+			if (chunk) {
+				outBuf += chunk;
+			}
 		}
+		return outBuf;
+	}
+
+	receiveOutput(bytes) {
+		// do stuff
 	}
 
 	/**
 	 * Overload this for each mode.
 	 * @param v {Complex}
 	 */
-	receive(v) {}
+	receive(v) { }
 
 	// #######################
 	// # T R A N S M I T
@@ -240,11 +188,11 @@ export class Mode {
 	} 
 
 	transmitSignal() {
-		const baseBand = this.transmit();
+		const baseband = this.transmit();
 		if (!baseband) {
 			return null;
 		}
-		const xs = this.txNco.mixBuf(baseBand);
+		const xs = this.txNco.mixBuf(baseband);
 		return xs;
 	}
 
