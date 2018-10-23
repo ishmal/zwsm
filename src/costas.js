@@ -40,7 +40,7 @@ export class Costas {
 
 	update(v) {
         	let phase = this.phase;
-		const {r, i} = ncoTable[phase * PI_SCALE ];
+		const {r, i} = ncoTable[Math.floor(phase * PI_SCALE)];
 		const sinx = r * v;
 		const sinxf = this.slpf.update(sinx);
 		const cosx = i * v;
