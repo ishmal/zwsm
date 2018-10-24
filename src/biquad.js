@@ -12,9 +12,16 @@
  * @param a2 {number}
  * @return {Filter}
  */
-function BiquadFilter(b0, b1, b2, a1, a2) {
+function BiquadFilter(b0, b1, b2, a0, a1, a2) {
+	const a0Inv = 1 / a0;
+	b0 *= a0Inv;
+	b1 *= a0Inv;
+	b2 *= a0Inv;
+	a1 *= a0Inv;
+	a2 *= a0Inv;
 
-    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+	let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+	
     let x1r = 0, x2r = 0, y1r = 0, y2r = 0;
     let x1i = 0, x2i = 0, y1i = 0, y2i = 0;
 
@@ -25,7 +32,7 @@ function BiquadFilter(b0, b1, b2, a1, a2) {
             x2 = x1;
             x1 = x;
             y2 = y1;
-            y1 = y;
+			y1 = y;
             return y;
         },
 
@@ -49,6 +56,9 @@ function BiquadFilter(b0, b1, b2, a1, a2) {
 }
 
 function getCossin(frequency, sampleRate) {
+	if (frequency >= sampleRate * 0.5) {
+		throw new Error(`Biquad: frequency ${frequency} is greater than 1/2 the sampleRate ${sampleRate}`);
+	}
 	const freq = 2.0 * Math.PI * frequency / sampleRate;
 	const sn = Math.sin(freq);
 	const cs = Math.cos(freq);
@@ -67,13 +77,13 @@ export class Biquad {
         q = typeof q !== "undefined" ? q : 0.707;
 		const { sn, cs } = getCossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
-        const b0 = (1.0 - cs) / 2.0;
+        const b0 = (1.0 - cs) * 0.5;
         const b1 = 1.0 - cs;
-        const b2 = (1.0 - cs) / 2.0;
+        const b2 = (1.0 - cs) * 0.5;
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0);
+        return BiquadFilter(b0, b1, b2, a0, a1, a2);
     }
 
     /**
@@ -86,13 +96,13 @@ export class Biquad {
         q = typeof q !== "undefined" ? q : 0.707;
 		const { sn, cs } = getCossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
-        const b0 = (1.0 + cs) / 2.0;
+        const b0 = (1.0 + cs) * 0.5;
         const b1 = -(1.0 + cs);
-        const b2 = (1.0 + cs) / 2.0;
+        const b2 = (1.0 + cs) * 0.5;
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0);
+        return BiquadFilter(b0, b1, b2, a0, a1, a2);
     }
 
     /**
@@ -105,13 +115,13 @@ export class Biquad {
         q = typeof q !== "undefined" ? q : 0.5;
 		const { sn, cs } = getCossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
-        const b0 = sn / 2.0;   //  = q*alpha
+        const b0 = sn * 0.5;   //  = q*alpha
         const b1 = 0.0;
-        const b2 = -sn / 2.0;  //  = -q*alpha
+        const b2 = -sn * 0.5;  //  = -q*alpha
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0);
+        return BiquadFilter(b0, b1, b2, a0, a1, a2);
     }
 
     /**
@@ -130,7 +140,7 @@ export class Biquad {
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0);
+        return BiquadFilter(b0, b1, b2, a0, a1, a2);
     }
 
 }
