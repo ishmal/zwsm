@@ -15,6 +15,10 @@ export class ModeTester {
 		this.mode = new ModeClass(this);
 	}
 
+	status(msg) {
+		console.log("ModeTester: " + msg);
+	}
+
 	execute() {
 		const mode = this.mode;
 		let outBuf = [];
@@ -24,9 +28,10 @@ export class ModeTester {
 		};
 		mode.sendText(exp);
 		while(true) {
+			debugger;
 			const data = mode.transmitSignal();
 			mode.receiveSignal(data); //receiver needs to see the final null
-			if (!data) {
+			if (!data || data.length === 0) {
 				break;
 			}
 		}

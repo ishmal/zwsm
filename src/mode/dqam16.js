@@ -18,17 +18,16 @@ const q16Trans = [
 ];
 /* beautify preserve:end */
 
-export class Qam16 extends Mode{
+export class Qam16 extends Mode {
 
 	constructor(par) {
 		super(par);
-		this.symbolRate = 600;
-		this.frequency = 1200;
+		this.setSymbolRate(600);
+		this.setFrequency(1200);
 		let sampleRate = par.sampleRate;
-		this.samplesPerSymbol = (sampleRate / this.symbolRate) | 0;
-		console.log("sps:" + this.samplesPerSymbol);
+		this.samplesPerSymbol = Math.floor(sampleRate / this.symbolRate);
+		console.log("sps:" + this.getSamplesPerSymbol());
 		this.quadrant = 0;
-		par.setBandpass(this.frequency, this.symbolRate);
 	}
 
 	receive() {

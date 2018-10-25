@@ -28,6 +28,10 @@ export class Zws {
 		this.tuner = new Tuner(this);
 	}
 
+	status(msg) {
+		console.log("ZWS: " + msg);
+	}
+
 	start() {
 		this.audioInput.start();
 		this.tuner.start();

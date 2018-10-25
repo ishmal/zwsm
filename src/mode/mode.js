@@ -37,10 +37,18 @@ export class Mode {
 	constructor(par) {
 		this.par = par;
 		this.frequency = 1000;
-		this.rate = 31.25;
-		this.rxNco = Nco.createSimple(this.frequency, par.sampleRate);
-		this.txNco = Nco.createSimple(this.frequency, par.sampleRate);
+		this.symbolRate = 31.25;
+		this.rxNco = new Nco(this.frequency, par.sampleRate);
+		this.txNco = new Nco(this.frequency, par.sampleRate);
 		this.transmitData = [];
+	}
+
+	status(msg) {
+		if (this.par) {
+			this.par.status(msg);
+		} else {
+			console.log(msg);
+		}
 	}
 
 	/**
@@ -86,10 +94,10 @@ export class Mode {
 	 * works in ES6.
 	 * @param v {number}
 	 */
-	setRate(v) {
-		this.rate = v;
-		this.status("Fs: " + this.par.sampleRate + " rate: " + v +
-			" sps: " + this.samplesPerSymbol);
+	setSymbolRate(v) {
+		this.symbolRate = v;
+		const msg = `Fs: ${this.par.sampleRate}  rate: ${v}  sps: ${this.getSamplesPerSymbol()}`;
+		this.status(msg);
 	}
 
 	/**
@@ -103,7 +111,7 @@ export class Mode {
 	/**
 	 * @return {number}
 	 */
-	get samplesPerSymbol() {
+	getSamplesPerSymbol() {
 		return this.par.sampleRate / this.rate;
 	}
 
@@ -118,7 +126,7 @@ export class Mode {
 	receiveSignal(data) {
 		if (!data) {
 			//we need to turn something off here
-			return;
+			return null;
 		}
 		const inputBuf = [];
 		for (let i = 0, len = data.length; i < len; i++) {
@@ -129,7 +137,7 @@ export class Mode {
 				i: v * cs.i
 			};
 		}
-		this.receive(inBuf);
+		this.receive(inputBuf);
 	}
 
 	receiveOutput(bytes) {
