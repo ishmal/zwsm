@@ -12,7 +12,7 @@
  * @param a2 {number}
  * @return {Filter}
  */
-function BiquadFilter(b0, b1, b2, a0, a1, a2) {
+function filter(b0, b1, b2, a0, a1, a2) {
 	const a0Inv = 1 / a0;
 	b0 *= a0Inv;
 	b1 *= a0Inv;
@@ -55,7 +55,7 @@ function BiquadFilter(b0, b1, b2, a0, a1, a2) {
 
 }
 
-function getCossin(frequency, sampleRate) {
+function cossin(frequency, sampleRate) {
 	if (frequency >= sampleRate * 0.5) {
 		throw new Error(`Biquad: frequency ${frequency} is greater than 1/2 the sampleRate ${sampleRate}`);
 	}
@@ -73,9 +73,8 @@ export class Biquad {
      * @param q {number}
      * @return {Filter}
      */
-    static lowPass(frequency, sampleRate, q) {
-        q = typeof q !== "undefined" ? q : 0.707;
-		const { sn, cs } = getCossin(frequency, sampleRate);
+    static lowPass(frequency, sampleRate, q = 0.707) {
+		const { sn, cs } = cossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
         const b0 = (1.0 - cs) * 0.5;
         const b1 = 1.0 - cs;
@@ -83,7 +82,7 @@ export class Biquad {
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0, b1, b2, a0, a1, a2);
+        return filter(b0, b1, b2, a0, a1, a2);
     }
 
     /**
@@ -92,9 +91,8 @@ export class Biquad {
      * @param q {number}
      * @return {Filter}
      */
-    static highPass(frequency, sampleRate, q) {
-        q = typeof q !== "undefined" ? q : 0.707;
-		const { sn, cs } = getCossin(frequency, sampleRate);
+    static highPass(frequency, sampleRate, q = 0.707) {
+		const { sn, cs } = cossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
         const b0 = (1.0 + cs) * 0.5;
         const b1 = -(1.0 + cs);
@@ -102,7 +100,7 @@ export class Biquad {
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0, b1, b2, a0, a1, a2);
+        return filter(b0, b1, b2, a0, a1, a2);
     }
 
     /**
@@ -111,9 +109,8 @@ export class Biquad {
      * @param q {number}
      * @return {Filter}
      */
-    static bandPass(frequency, sampleRate, q) {
-        q = typeof q !== "undefined" ? q : 0.5;
-		const { sn, cs } = getCossin(frequency, sampleRate);
+    static bandPass(frequency, sampleRate, q = 0.707) {
+		const { sn, cs } = cossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
         const b0 = sn * 0.5;   //  = q*alpha
         const b1 = 0.0;
@@ -121,7 +118,7 @@ export class Biquad {
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0, b1, b2, a0, a1, a2);
+        return filter(b0, b1, b2, a0, a1, a2);
     }
 
     /**
@@ -130,9 +127,8 @@ export class Biquad {
      * @param q {number}
      * @return {Filter}
      */
-    static bandReject(frequency, sampleRate, q) {
-        q = typeof q !== "undefined" ? q : 0.5;
-		const { sn, cs } = getCossin(frequency, sampleRate);
+    static bandReject(frequency, sampleRate, q = 0.707) {
+		const { sn, cs } = cossin(frequency, sampleRate);
         const alpha = sn / (2.0 * q);
         const b0 = 1.0;
         const b1 = -2.0 * cs;
@@ -140,7 +136,7 @@ export class Biquad {
         const a0 = 1.0 + alpha;
         const a1 = -2.0 * cs;
         const a2 = 1.0 - alpha;
-        return BiquadFilter(b0, b1, b2, a0, a1, a2);
+        return filter(b0, b1, b2, a0, a1, a2);
     }
 
 }
